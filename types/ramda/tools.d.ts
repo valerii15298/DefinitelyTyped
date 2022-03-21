@@ -181,6 +181,83 @@ export type KeyValuePair<K, V> = [K, V];
  */
 export type Lens<S, A> = (functorFactory: (a: A) => Functor<A>) => (s: S) => Functor<S>;
 
+/*
+ * Returns true if T1 array length less than or equal to length of array T2, else returns false
+ *
+ * @param T1 - first readonly array
+ * @param T2 - second readonly array
+ *
+ * <created by @valerii15298>
+ * */
+type arr1LessThanOrEqual<
+    T1 extends ReadonlyArray<any>,
+    T2 extends ReadonlyArray<any>,
+> = T1['length'] extends T2['length']
+    ? true
+    : T2['length'] extends 0
+    ? false
+    : T2 extends readonly [infer First, ...infer Rest]
+    ? Rest extends ReadonlyArray<any>
+        ? arr1LessThanOrEqual<T1, Rest>
+        : never
+    : never;
+
+/*
+ * Merge second array with first one,
+ * resulting array will have the same length as array T1,
+ * every item in new array will be item from first array(T1) by corresponding index
+ * intersected with item from second array(also with the same index) if such exist
+ *
+ * example: mergeArrWithLeft<[1, number, number, string], [number, 2, 7]>
+ *   will result to => [1, 2, 7, string]
+ *
+ * @param T1
+ * @param T2
+ *
+ * <created by @valerii15298>
+ * */
+type mergeArrWithLeft<T1 extends ReadonlyArray<any>, T2 extends ReadonlyArray<any>> = readonly [
+    ...{
+        readonly [Index in keyof T1]: Index extends keyof T2 ? T1[Index] & T2[Index] : T1[Index];
+    },
+];
+
+/*
+ * The same as mergeArrWithLeft but will merge smaller array to larger one,
+ * so that data will not be lost and maximum length array will be returned
+ *
+ * example: mergeArrays<[1, number], [number, 2, string]>
+ *   will result to => [1, 2, string]
+ *
+ * @param T1
+ * @param T2
+ *
+ * <created by @valerii15298>
+ * */
+type mergeArrays<T1 extends ReadonlyArray<any>, T2 extends ReadonlyArray<any>> = arr1LessThanOrEqual<
+    T1,
+    T2
+> extends true
+    ? mergeArrWithLeft<T2, T1>
+    : mergeArrWithLeft<T1, T2>;
+
+/*
+ * Given array of functions will return new array which will be constructed
+ * merging all functions parameters array using mergeArrays generic.
+ *
+ * If provided array is not array of functions, return type will be empty array([])
+ *
+ * @param T - array of functions
+ *
+ * <created by @valerii15298>
+ * */
+export type LargestArgumentsList<T extends ReadonlyArray<any>> = T extends readonly [
+    (...args: infer Args) => any,
+    ...infer Rest,
+]
+    ? mergeArrays<LargestArgumentsList<Rest>, Args>
+    : readonly [];
+
 // ---------------------------------------------------------------------------------------
 // M
 
@@ -290,7 +367,7 @@ export interface Reduced<A> {
     '@@transducer/reduced': true;
 }
 
-type Fn = (...args: any) => any;
+export type Fn = (...args: any[]) => any;
 export type ReturnTypesOfFns<A extends ReadonlyArray<Fn>> = A extends [infer H, ...infer R]
     ? H extends Fn
         ? R extends Fn[]
@@ -298,6 +375,13 @@ export type ReturnTypesOfFns<A extends ReadonlyArray<Fn>> = A extends [infer H, 
             : []
         : []
     : [];
+export type ReturnTypesOfFnsReadonly<A extends ReadonlyArray<Fn>> = A extends readonly [infer H, ...infer R]
+    ? H extends Fn
+        ? R extends readonly Fn[]
+            ? readonly [ReturnType<H>, ...ReturnTypesOfFnsReadonly<R>]
+            : readonly []
+        : readonly []
+    : readonly [];
 export type InputTypesOfFns<A extends ReadonlyArray<Fn>> = A extends [infer H, ...infer R]
     ? H extends Fn
         ? R extends Fn[]

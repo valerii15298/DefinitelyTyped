@@ -46,9 +46,11 @@ import {
     Evolve,
     Evolver,
     Find,
+    Fn,
     Functor,
     InputTypesOfFns,
     KeyValuePair,
+    LargestArgumentsList,
     Lens,
     Merge,
     MergeAll,
@@ -61,6 +63,7 @@ import {
     Pred,
     Reduced,
     ReturnTypesOfFns,
+    ReturnTypesOfFnsReadonly,
     ValueOfRecord,
     ValueOfUnion,
     Take,
@@ -519,79 +522,22 @@ export function contains<T>(a: T): (list: readonly T[]) => boolean;
  * are passed as arguments to the converging function to produce the return value.
  */
 // tslint:disable:max-line-length
+export function converge<TResult, RestFunctions extends ReadonlyArray<Fn>>(
+    converging: (...args: ReturnTypesOfFnsReadonly<RestFunctions>) => TResult,
+    branches: RestFunctions,
+): (...args: LargestArgumentsList<RestFunctions>) => TResult;
 export function converge<
-    TArgs extends any[],
+    CArgs extends ReadonlyArray<any>,
     TResult,
-    R1,
-    R2,
-    R3,
-    R4,
-    R5,
-    R6,
-    R7,
-    RestFunctions extends Array<(...args: TArgs) => any>,
+    RestFunctions extends readonly [
+        ...{
+            [Index in keyof CArgs]: (...args: ReadonlyArray<any>) => CArgs[Index];
+        },
+    ],
 >(
-    converging: (...args: readonly [R1, R2, R3, R4, R5, R6, R7, ...ReturnTypesOfFns<RestFunctions>]) => TResult,
-    branches: [
-        (...args: TArgs) => R1,
-        (...args: TArgs) => R2,
-        (...args: TArgs) => R3,
-        (...args: TArgs) => R4,
-        (...args: TArgs) => R5,
-        (...args: TArgs) => R6,
-        (...args: TArgs) => R7,
-        ...RestFunctions,
-    ],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1, R2, R3, R4, R5, R6, R7>(
-    converging: (...args: readonly [R1, R2, R3, R4, R5, R6, R7] & { length: 7 }) => TResult,
-    branches: [
-        (...args: TArgs) => R1,
-        (...args: TArgs) => R2,
-        (...args: TArgs) => R3,
-        (...args: TArgs) => R4,
-        (...args: TArgs) => R5,
-        (...args: TArgs) => R6,
-        (...args: TArgs) => R7,
-    ],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1, R2, R3, R4, R5, R6>(
-    converging: (...args: readonly [R1, R2, R3, R4, R5, R6] & { length: 6 }) => TResult,
-    branches: [
-        (...args: TArgs) => R1,
-        (...args: TArgs) => R2,
-        (...args: TArgs) => R3,
-        (...args: TArgs) => R4,
-        (...args: TArgs) => R5,
-        (...args: TArgs) => R6,
-    ],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1, R2, R3, R4, R5>(
-    converging: (...args: readonly [R1, R2, R3, R4, R5] & { length: 5 }) => TResult,
-    branches: [
-        (...args: TArgs) => R1,
-        (...args: TArgs) => R2,
-        (...args: TArgs) => R3,
-        (...args: TArgs) => R4,
-        (...args: TArgs) => R5,
-    ],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1, R2, R3, R4>(
-    converging: (...args: readonly [R1, R2, R3, R4] & { length: 4 }) => TResult,
-    branches: [(...args: TArgs) => R1, (...args: TArgs) => R2, (...args: TArgs) => R3, (...args: TArgs) => R4],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1, R2, R3>(
-    converging: (...args: readonly [R1, R2, R3] & { length: 3 }) => TResult,
-    branches: [(...args: TArgs) => R1, (...args: TArgs) => R2, (...args: TArgs) => R3],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1, R2>(
-    converging: (...args: readonly [R1, R2] & { length: 2 }) => TResult,
-    branches: [(...args: TArgs) => R1, (...args: TArgs) => R2],
-): (...args: TArgs) => TResult;
-export function converge<TArgs extends any[], TResult, R1>(
-    converging: (...args: readonly [R1] & { length: 1 }) => TResult,
-    branches: [(...args: TArgs) => R1],
-): (...args: TArgs) => TResult;
+    converging: (...args: CArgs) => TResult,
+    branches: RestFunctions,
+): (...args: LargestArgumentsList<RestFunctions>) => TResult;
 // tslint:enable:max-line-length
 
 /**
